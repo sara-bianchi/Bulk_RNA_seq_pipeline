@@ -79,5 +79,23 @@ Output_yymmdd
   	- GSEA = GSEA results files for kegg pathway and for the selected ontology for each comparison (generated with ClusterProfiler)
   	- PCA = PCA loadings for the first 1000 most variable genes before and after the batch effect correction for n PCA components where n = number of samples
 
+# Working with modified genomes
+If your the genome of your biological material has undergone any gene editing process and you want to monitor transgene expression with this analysis you have to perform an additional step. Before running the indexing you have to modify the FASTA and GTF file by adding the information of your transgenes. 
 
+- first create a FASTA file with the first line containing > gene_name (name of your transgene), and the second with the sequence of your transgene
+- create a GTF file with 8 tab separated columns containing:
+  - gene_name
+  - exon name
+  - chromosome name (for ENSEMBL annotation only the number is needed, for UCSC you need to add also the prefix chr, ex: 1, chr1)
+  - length in bases of your gene
+  - a separator dot (.)
+  - the strand (+/-)
+  - a separator dot (.)
+  - a column like the following in which you have to insert the information of your gene within the "". In order to be recognised by the following steps of the pipeline gene_type must be set to protein_coding: gene_id ""; transcript_id ""; gene_name ""; gene_biotype "";
+- add the FASTA file to your original FASTA file as: cat original.fa transgene.fa > final.fa
+- add the GTF file to your original GTF file as: cat original.gtf transgene.gtf > final.gtf
+You can either repeat these steps for all your transgenes individually or create a single FASTA and a single GTF with different lines, each one related to a specific transgene. Once you have performed these steps you can proceed with the pipeline: remember to set modified_genome to TRUE in the settings file, and to add the list of the intserted transgene names in the added_genes parameter. These names must match the gene_name parameter used in the GTF.
+
+
+  
 
