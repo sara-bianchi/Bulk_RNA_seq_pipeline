@@ -50,33 +50,34 @@ The only part that you need to edit is the container_name which should match the
 # Output interpretation
 In your working directory it will be created a new folder system:
 Output_yymmdd
-└ counts = this folder contains one directory per sample named with the corresponding sample_ID and it will be created if alignment = TRUE. Each sample folder contains ReadsPerGene.out.tab counts file obtained from the alignment
-└ genome = this folder contains the indexed genome. It will be created if indexing = TRUE		
-└ Plots
-	└ Analysis
-        └ Boxplots = boxplots of the selected genes (in the settings file) normalizing counts for the sizes of the samples
-        └ Heatmaps = clustered heatmaps of z-score of TPM normalized counts for: the whole dataset, the selected genes in the settings file and the significative genes for each comparison (based on the logFC and pvalue threshold set in the settings file)
-        └ Modules = results of WGCNA analysis: violin plot and heatmap for the first principal component of each module in each sample, and scale free topology index plot.
-            └ GO = GO for the selected ontology of the genes belonging to each module
-            └ Heatmaps = clustered heatmap of the z-score of TPM normalized counts for the genes belonging to each module
-    └ Volcano_plots = volcano plots for each comparison (significative genes for logFC and pvalue are highlighted)
-	    └ GSEA
-        └ dotplots = dotplots for the gsea analysis of the selected ontology for each comparison
-        └ enrichment_plots = enrichment plots and heatmap of the enrichment core of genes of the selected GO term for each comparison
-        └ pathways = pathways plots of the selected pathways id where for each comparison is highlighted the logFC of significative genes (pvalue < selected threshold indicated in the settings file)
-	└ QC
-        └ Biotypes = percentage of counts of mitochondrial genes in each sample + biotypes distribution + biotype distribution excluding protein coding genes (plots obtained from row data before filtering)
-        └ Chromosomes = heatmap of gene expression for each chromosome after filtering and Deseq2 vsd correction
-        └ Correlation = heatmap of Pearson correlation generated for the top 1000 variable genes before and after batch effect correction (after filtering and Deseq2 vsd correction)
-        └ PCA = PCA analysis was performed on filtered and Deseq2 vsd normalized counts before and after batch effect correction. For either condition is represented: the scree plot, the PC1-PC2 plot, the plots of the combination of the first n components (where n is set in the settings file), the loading plot for the first n components where the top 10 and bottom 10 genes are highlighted.
-        └ QC = counts distribution (number of counts for each sample), library complexity, gene detection and variance stabilization plot (used for vsd normalization)
-        └ Variability = plots of log2FC of each sample in relation to the avarge of the replicates for that condition
-└ RData = environment.RData file with the R data saved at the end of the analysis. Datax.Rdata files where x is the comparison name: for each comparison it contains the differential gene expression analysis object obtained from limma (diff), the counts matrix of TPM normalized counts considered significant for logFC and pvalue (counts), the gene ste enrichment analysis object obtained from ClusterProfiler for the ontology selected (gse) and keg pathways (kk) and the corresponding ordered results tables (res_gsea and resk),.
-└ Tables = folders with csv files
-    └ Counts = raw counts filtered for protein coding genes and genes with a minimum level of expression (at least 3 counts in at least n samples where n is the minimum number of replicates per condition) with gene annotations + TPM normalized counts with the corresponding WGCNA module indicated in the “colors” column.
-    └ DGEs = differential gene expression analysis for  each comparison (generated with limma)
-    └ GSEA = GSEA results files for kegg pathway and for the selected ontology for each comparison (generated with ClusterProfiler)
-    └ PCA = PCA loadings for the first 1000 most variable genes before and after the batch effect correction for n PCA components where n = number of samples
-    └ trimmed = this folder contains trimmed fastq files and the corresponding report. It will be created if trimming = TRUE
+- counts = this folder contains one directory per sample named with the corresponding sample_ID, and it will be created if alignment = TRUE. Each sample folder contains ReadsPerGene.out.tab counts file obtained from the alignment
+- genome = this folder contains the indexed genome. It will be created if indexing = TRUE
+- trimmed = this folder contains trimmed fastq files and the corresponding report. It will be created if trimming = TRUE
+- Plots
+  	- Analysis
+  		- Boxplots = boxplots of the selected genes (in the settings file), normalizing counts for the sizes of the samples
+  		- Heatmaps = clustered heatmaps of z-score of TPM normalized counts for: the whole dataset, the selected genes in the settings file and the significative genes for each comparison (based on the logFC and pvalue threshold set in the settings file)
+  		- Modules = results of WGCNA analysis: violin plot and heatmap for the first principal component of each module in each sample, and scale free topology index plot.
+  	  		- GO = GO for the selected ontology of the genes belonging to each module
+  	  		- Heatmaps = clustered heatmap of the z-score of TPM normalized counts for the genes belonging to each module
+  	  	- Volcano_plots = volcano plots for each comparison (significative genes for logFC and pvalue are highlighted)	
+  	- GSEA
+  	  	- dotplots = dotplots for the GSEA analysis of the selected ontology for each comparison
+  	  	- enrichment_plots = enrichment plots and heatmap of the enrichment core of genes of the selected GO term for each comparison
+  	  	- pathways = pathways plots of the selected pathways id where for each comparison, the logFC of significant genes (pvalue < selected threshold indicated in the settings file)
+  	- QC
+  	  	- Biotypes = percentage of counts of mitochondrial genes in each sample + biotypes distribution + biotype distribution excluding protein coding genes (plots obtained from row data before filtering)
+  	  	- Chromosomes = heatmap of gene expression for each chromosome after filtering and Deseq2 vsd correction
+  	  	- Correlation = heatmap of Pearson correlation generated for the top 1000 variable genes before and after batch effect correction (after filtering and Deseq2 vsd correction)
+  	  	- PCA = PCA analysis was performed on filtered and Deseq2 vsd normalized counts before and after batch effect correction. For either condition is represented: the scree plot, the PC1-PC2 plot, the plots of the combination of the first n components (where n is set in the settings file), the loading plot for the first n components where the top 10 and bottom 10 genes are highlighted.
+  	  	- QC = counts distribution (number of counts for each sample), library complexity, gene detection and variance stabilization plot (used for vsd normalization)
+  	  	- Variability = plots of log2FC of each sample in relation to the avarge of the replicates for that condition
+- RData = environment.RData file with the R data saved at the end of the analysis. Datax.Rdata files where x is the comparison name: for each comparison it contains the differential gene expression analysis object obtained from limma (diff), the counts matrix of TPM normalized counts considered significant for logFC and pvalue (counts), the gene ste enrichment analysis object obtained from ClusterProfiler for the ontology selected (gse) and keg pathways (kk) and the corresponding ordered results tables (res_gsea and resk),.
+- Tables = folders with csv files
+  	- Counts = raw counts filtered for protein coding genes and genes with a minimum level of expression (at least 3 counts in at least n samples where n is the minimum number of replicates per condition) with gene annotations + TPM normalized counts with the corresponding WGCNA module indicated in the “colors” column.
+  	- DGEs = differential gene expression analysis for  each comparison (generated with limma)
+  	- GSEA = GSEA results files for kegg pathway and for the selected ontology for each comparison (generated with ClusterProfiler)
+  	- PCA = PCA loadings for the first 1000 most variable genes before and after the batch effect correction for n PCA components where n = number of samples
+
 
 
