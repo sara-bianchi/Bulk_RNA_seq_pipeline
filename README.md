@@ -57,7 +57,7 @@ Output_yymmdd
   	- Analysis
   		- Boxplots = boxplots of the selected genes (in the settings file), normalizing counts for the sizes of the samples
   		- Heatmaps = clustered heatmaps of z-score of TPM normalized counts for: the whole dataset, the selected genes in the settings file and the significative genes for each comparison (based on the logFC and pvalue threshold set in the settings file)
-  		- Modules = results of WGCNA analysis: violin plot and heatmap for the first principal component of each module in each sample, and scale free topology index plot.
+  		- Modules = results of WGCNA analysis: violin plot of the TPM values and heatmap for the eigenvector of each module in each sample, and scale free topology index plot. The boxplots show the average eigenvector value of each condition in each module, with or without normalization on the reciprocal standard deviation.
   	  		- GO = GO for the selected ontology of the genes belonging to each module
   	  		- Heatmaps = clustered heatmap of the z-score of TPM normalized counts for the genes belonging to each module
   	  	- Volcano_plots = volcano plots for each comparison (significative genes for logFC and pvalue are highlighted)	
