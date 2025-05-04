@@ -723,6 +723,26 @@ if(analysis == TRUE){
   ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Modules/violin_modules.pdf"),
          width = 14, height = 8)
   
+  #covariance modules
+  MEs0$sample_ID = rownames(MEs0)
+  meta_modules = table %>% dplyr::select(c("sample_ID", "condition"))
+  eigenvector_modules = MEs0 %>% dplyr::left_join(meta_modules, by = "sample_ID")
+  melt = melt(eigenvector_modules)
+  mean = melt %>% dplyr::group_by(condition, variable) %>% dplyr::summarise(mean = mean(value), sd = sd(value)) %>% dplyr::mutate(CV_rec = mean/sd)
+  ggplot(mean) +
+    geom_boxplot(aes(x = variable, y = mean)) +
+    geom_point(aes(x = variable, y = mean, color = condition)) +
+    geom_hline(aes(yintercept = 0), linetype = "dashed")
+  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Modules/boxplots_modules_mean.pdf"),
+         width = 14, height = 8)
+  
+  ggplot(mean) +
+    geom_boxplot(aes(x = variable, y = CV_rec)) +
+    geom_point(aes(x = variable, y = CV_rec, color = condition)) +
+    geom_hline(aes(yintercept = 0), linetype = "dashed")
+  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Modules/boxplots_modules_mean-sd.pdf"),
+         width = 14, height = 8)
+  
   colors = unique(module$colors)
   for(i in colors){
     genes_i = module %>% dplyr::filter(colors == i);
@@ -745,7 +765,7 @@ if(analysis == TRUE){
   counts_modules$gene_ID = rownames(counts_modules)
   counts_modules = counts_modules %>% dplyr::left_join(module, by = "gene_ID")
   write.csv(counts_modules, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/Counts/TPMnormalized_counts_modules.csv"))
-  write.csv( MEs0, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/Counts/eigenvector_modules.csv"))
+  write.csv(MEs0, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/Counts/eigenvector_modules.csv"))
   
   print("finishing moduls analysis")
   
