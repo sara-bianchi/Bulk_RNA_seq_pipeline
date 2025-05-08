@@ -38,7 +38,7 @@ In your working directory you need to have:
 Once all the files have been put in the working directory and all the paths have been indicated in the settings and table files, open your terminal to run the analysis.
 First you have to create the connection between your folder and the container, and to do this you have to run the following command:
 
-docker run -d -v [Path/To/Your/Folder]:/home/shared_folder --name [container_name] hedgelab/bulk_image:image4
+docker run -d -v [Path/To/Your/Folder]:/home/shared_folder --name [container_name] hedgelab/bulk_image:image3
 
 what you need to edit is everything between squared brackets [], adding the path of your folder and assigning a unique name to your container. If you have not downloaded the image yet on your local Docker repository it will be directly downloaded from the Docker Hub. Once this download has been done the creation of futher containers for other analyses will be faster.
 The next step consists in launching an Rscript which is found direclty in the downloaded image, and it is also provided in the GitHub in case you want to edit and replace it. This script can performe all the steps of the analysis indicated in the settings file using the files provided in the table. It can then save all the outputs within a folder named Output_yymmdd in your working directory. To run this script you just have to run the following command:
