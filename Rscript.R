@@ -132,6 +132,12 @@ if(indexing == TRUE){
   } else{geneInfo = as.character(settings$gene_info[1]); geneInfo = read.table(geneInfo, quote = "\"", comment.char = "", skip = 1)}
 }
 
+if(alignment == TRUE | indexing == TRUE){
+  if(length(unique(na.omit(settings$CPU))) != 1 | as.integer(settings$CPU[1]) == "NA"){
+    print("invalid argument for CPU"); stop()
+  } else{CPU = as.logical(settings$CPU[1])}
+}
+
 if(length(unique(na.omit(settings$analysis))) != 1 | as.logical(settings$analysis[1]) == "NA"){
   print("invalid argument for analysis"); stop()
 } else{analysis = as.logical(settings$analysis[1])}
@@ -241,6 +247,10 @@ if(alignment == TRUE){
   }
 }
 
+if(length(rownames(table)) < 3){
+  batch_correction == FALSE
+}
+
 #trimming
 if(trimming == TRUE){
   print("starting trimming")
@@ -260,7 +270,7 @@ if(trimming == TRUE){
     }
     
     for(i in 1:length(rownames(table))){fastq = table$fastq[i]; sample_ID = table$sample_ID[i]
-      system2("/usr/bin/trim_galore", paste0("--adapter ", as.character(adapter),  clipping_R1_5, clipping_R1_3, " --gzip", fqc, " --basename ", sample_ID, " --output_dir ", as.character(out_dir), " ", as.character(fastq)))
+    system2("/usr/bin/trim_galore", paste0("--adapter ", as.character(adapter),  clipping_R1_5, clipping_R1_3, " --gzip", fqc, " --basename ", sample_ID, " --output_dir ", as.character(out_dir), " ", as.character(fastq)))
     }
   } else if(mode == "paired"){
     if(clip_3_1 == 0){
@@ -284,7 +294,7 @@ if(trimming == TRUE){
       clipping_R2_5 = paste0(" --clip_R2 ", as.character(clip_5_2))
     }
     for(i in 1:length(rownames(table))){fastq1 = table$fastq1[i]; fastq2 = table$fastq2[i]; sample_ID = table$sample_ID[i]
-      system2("/usr/bin/trim_galore", paste0("--adapter ", as.character(adapter), " --adapter2 ", as.character(adapter2), clipping_R1_5, clipping_R1_3, clipping_R2_5, clipping_R2_3," --gzip --paired", fqc, " --basename ", sample_ID, " --output_dir ", as.character(out_dir), " ", as.character(fastq1), " ", as.character(fastq2)))
+    system2("/usr/bin/trim_galore", paste0("--adapter ", as.character(adapter), " --adapter2 ", as.character(adapter2), clipping_R1_5, clipping_R1_3, clipping_R2_5, clipping_R2_3," --gzip --paired", fqc, " --basename ", sample_ID, " --output_dir ", as.character(out_dir), " ", as.character(fastq1), " ", as.character(fastq2)))
     }
   }
   print("finishing trimming")
@@ -296,7 +306,7 @@ if(indexing == TRUE){
   
   system2("mkdir", "/home/genome")
   system2("chmod", "777 /home/genome")
-  system2("/STAR", paste0("--runThreadN 4 --runMode genomeGenerate --limitGenomeGenerateRAM=150000000000 --genomeDir /home/genome --genomeFastaFiles ", fasta, " --sjdbGTFfile ", gtf));
+  system2("/STAR", paste0("--runThreadN ", CPU, " --runMode genomeGenerate --limitGenomeGenerateRAM=150000000000 --genomeDir /home/genome --genomeFastaFiles ", fasta, " --sjdbGTFfile ", gtf));
   system2("rm", paste0("-r /home/shared_folder/Output_", current_time, "/genome"));
   system2("mv", paste0("/home/genome /home/shared_folder/Output_", current_time));
   genome_dir = paste0("/home/shared_folder/Output_", current_time, "/genome");
@@ -351,22 +361,30 @@ if(alignment == TRUE){
   print("starting alignment")
   
   dir.create(paste0("/home/shared_folder/Output_", current_time, "/counts"));
+  
   if(mode == "single"){
     for(i in 1:length(rownames(table))){
       sample_ID = table$sample_ID[i];
+      zipped = ifelse(rev(strsplit(table$fastq[i], "\\.")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
       counts_dir = paste0("/home/shared_folder/Output_", current_time, "/counts/", sample_ID);
       dir.create(counts_dir);
       system2("chmod", paste0("777 ", counts_dir));
       if(trimming == FALSE){fastq = table$fastq[i]} else if(trimming == TRUE){
         fastq = paste0(out_dir, "/", sample_ID, "_trimmed.fq.gz")};
-      system2("/STAR", paste0("--runThreadN 4 --genomeDir ", genome_dir, " --readFilesIn ", fastq, " --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts --readFilesCommand zcat --outFileNamePrefix ", counts_dir, "/", sample_ID))}
+      system2("/STAR", paste0("--runThreadN ", CPU, " --genomeDir ", genome_dir, " --readFilesIn ", fastq, " --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts", zipped, " --outFileNamePrefix ", counts_dir, "/", sample_ID))}
   } else if(mode == "paired"){
     for(i in 1:length(rownames(table))){sample_ID = table$sample_ID[i];
+    zipped1 = ifelse(rev(strsplit(table$fastq1[i], ".")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
+    zipped2 = ifelse(rev(strsplit(table$fastq2[i], ".")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
+    if(zipped1 == zipped2){zipped = zipped1} else{
+      stop("fastq files must be provided in the same zip format for R1 and R2")
+    }
     counts_dir = paste0("/home/shared_folder/Output_", current_time, "/counts/", sample_ID);
     if(trimming == FALSE){fastq1 = table$fastq1[i]; fastq2 = table$fastq2[i]} else if(trimming == TRUE){
       fastq1 = paste0(out_dir, "/", sample_ID, "_val_1.fq.gz");
       fastq2 = paste0(out_dir, "/", sample_ID, "_val_2.fq.gz")};
-    system2("/STAR", paste0("--runThreadN 4 --genomeDir ", genome_dir, " --readFilesIn ", fastq1, " ", fastq2, " --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts --readFilesCommand zcat --outFileNamePrefix ", counts_dir, "/", sample_ID))}
+    
+    system2("/STAR", paste0("--runThreadN ", CPU, " --genomeDir ", genome_dir, " --readFilesIn ", fastq1, " ", fastq2, " --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts", zipped, " --outFileNamePrefix ", counts_dir, "/", sample_ID))}
   }
   print("finishing alignment")
 }
@@ -549,16 +567,21 @@ if(analysis == TRUE){
   
   #clustering
   #Batch effect
-  vsd2 = vsd
-  assay(vsd2) = limma::removeBatchEffect(assay(vsd2), vsd2$replicate)
+  
+  if(length(rownames(table)) > 2){
+    vsd2 = vsd
+    assay(vsd2) = limma::removeBatchEffect(assay(vsd2), vsd2$replicate)
+  }
   
   #Clustering
   as.ggplot(plot_sample_clustering(vsd, n_feats = 1000, anno_vars = c("condition", "replicate"), distance = "pearson")) + ggtitle(" Pearson correlation before batch effect correction") + theme(plot.title = element_text(face = "bold"))
   ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/Correlation/clustering_beforecorrection.pdf"),
          width = 14, height = 8)
-  as.ggplot(plot_sample_clustering(vsd2, n_feats = 1000, anno_vars = c("condition", "replicate"), distance = "pearson")) + ggtitle(" Pearson correlation after batch effect correction") + theme(plot.title = element_text(face = "bold"))
-  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/Correlation/clustering_aftercorrection.pdf"),
-         width = 14, height = 8)
+  if(length(rownames(table)) > 2){
+    as.ggplot(plot_sample_clustering(vsd2, n_feats = 1000, anno_vars = c("condition", "replicate"), distance = "pearson")) + ggtitle(" Pearson correlation after batch effect correction") + theme(plot.title = element_text(face = "bold"))
+    ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/Correlation/clustering_aftercorrection.pdf"),
+           width = 14, height = 8)
+  }
   
   #PCA
   #pca before batch correction
@@ -584,26 +607,28 @@ if(analysis == TRUE){
   write.csv(loadings1, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/PCA/loadings_beforecorrection.csv"))
   
   #pca after batch correction
-  plot_pca_scatters(vsd2, n_PCs = PCA,  color_by = "condition", shape_by = "replicate")
-  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/PCA_1to", as.character(PCA), "_aftercorrection.pdf"),
-         width = 14, height = 8)
-  pca_res2 = plot_pca(vsd2, show_plot = FALSE, n_feats = 1000)
-  for(i in 1:PCA) {plot_loadings(pca_res2, PC = i, annotate_top_n = 10); ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/pca_top10_", as.character(i), "_aftercorrection.pdf"), width = 14, height = 8)}
-  
-  pca_var2 = as.data.frame(pca_res2[["var_exp"]])
-  colnames(pca_var2) = "pca_var"
-  pca_var2$pca = c(1:length(rownames(meta)))
-  ggplot(pca_var2, aes(x = pca, y = pca_var)) + geom_point()
-  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/scree_plot_aftercorrection.pdf"),
-         width = 14, height = 8)
-  
-  pca2 = as.data.frame(pca_res2[["data"]])
-  ggplot(pca2, aes(x = PC1, y = PC2, shape = replicate)) + geom_point(aes(color = condition), size = 4) + scale_color_manual(values = pal) + ggtitle("PCA of the 1000 most variable genes after batch effect correction")
-  ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/PCA_1_2_aftercorrection.pdf"),
-         width = 14, height = 8)
-  
-  loadings2 = as.data.frame(pca_res2[["loadings"]])
-  write.csv(loadings2, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/PCA/loadings_aftercorrection.csv"))
+  if(length(rownames(table)) > 2){
+    plot_pca_scatters(vsd2, n_PCs = PCA,  color_by = "condition", shape_by = "replicate")
+    ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/PCA_1to", as.character(PCA), "_aftercorrection.pdf"),
+           width = 14, height = 8)
+    pca_res2 = plot_pca(vsd2, show_plot = FALSE, n_feats = 1000)
+    for(i in 1:PCA) {plot_loadings(pca_res2, PC = i, annotate_top_n = 10); ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/pca_top10_", as.character(i), "_aftercorrection.pdf"), width = 14, height = 8)}
+    
+    pca_var2 = as.data.frame(pca_res2[["var_exp"]])
+    colnames(pca_var2) = "pca_var"
+    pca_var2$pca = c(1:length(rownames(meta)))
+    ggplot(pca_var2, aes(x = pca, y = pca_var)) + geom_point()
+    ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/scree_plot_aftercorrection.pdf"),
+           width = 14, height = 8)
+    
+    pca2 = as.data.frame(pca_res2[["data"]])
+    ggplot(pca2, aes(x = PC1, y = PC2, shape = replicate)) + geom_point(aes(color = condition), size = 4) + scale_color_manual(values = pal) + ggtitle("PCA of the 1000 most variable genes after batch effect correction")
+    ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/QC/PCA/PCA_1_2_aftercorrection.pdf"),
+           width = 14, height = 8)
+    
+    loadings2 = as.data.frame(pca_res2[["loadings"]])
+    write.csv(loadings2, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/PCA/loadings_aftercorrection.csv"))
+  }
   
   print("finishing QC")
   
@@ -808,22 +833,22 @@ if(analysis == TRUE){
     if(length(unique(diff$col_to_plot)) == 3){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("#3283FE", "grey", "#FA0087")) +
-      ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}
     if(length(unique(diff$col_to_plot)) == 1){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("grey")) +
-      ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}
     if(length(unique(diff$col_to_plot)) == 2){if(sort(unique(diff$col_to_plot))[2] == "other"){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("#3283FE", "grey")) +
-      ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}}
     if(length(unique(diff$col_to_plot)) == 2){if(sort(unique(diff$col_to_plot))[1] == "other"){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("grey", "#FA0087")) +
-      ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}}
     write.csv(diff, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/DGEs/", cfr_name, ".csv"));
     diff_sign = diff %>% dplyr::filter(col_to_plot != "_other");
@@ -899,7 +924,7 @@ if(analysis == TRUE){
   
   print("finishing differential gene expression analysis")
   
-
+  
   #save Rfile
   print("saving R environment")
   
