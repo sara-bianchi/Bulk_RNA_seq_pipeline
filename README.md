@@ -2,7 +2,7 @@
 Automated pipeline for the analysis of bulk gene expression data
 
 # Installation and configuration
-All the packages required to run the pipeline have already been installed within a Docker image available on our repository as hedgelab/bulk_image:image4.
+All the packages required to run the pipeline have already been installed within a Docker image available on our repository as hedgelab/bulk_image:image3.
 The use of Docker is recommended to ensure reproducibility of the results. In case you don't have Docker installed on your computer, you can install it following the instructions: https://docs.docker.com/get-started/get-docker/
 Otherwise, it is possible to recreate the working environment following the installation commands in the provided Dockerfile (optimized for a bash shell).
 
@@ -12,7 +12,7 @@ Once Docker is installed and properly configured, activate the Docker engine dir
 start docker
 
 # Preparation of the input files
-The first step is to choose a working directory on your computer. This directory will be the one shared with the Docker container, so anything needed for the analysis needs to be located here, either directly or by organizing your input files in subdirectories. Also the final output will be written in the same directory. The container will be connected to this directory and will recognise it from a default internal path assigned when the container is created, which is /home/shared_folder. This means that to make your files recognisable within the container, all the subsequently required paths need to start with the same prefix /home/shared_folder/ folowed by the internal paths within your working directory. For instance, if a fastq file is saved in D:/Data/Working_dir/Fastq/sample1.fastq.gz, and I decide to use Working_dir as my working directory, the path of this file will be /home/shared_folder/Fasq/sample1.fastq.gz.
+The first step is to choose a working directory on your computer. This directory will be the one shared with the Docker container, so anything needed for the analysis needs to be located here, either directly or by organizing your input files in subdirectories. Also the final output will be written in the same directory. The container will be connected to this directory and will recognise it from a default internal path assigned when the container is created, which is /home/shared_folder. This means that to make your files recognisable within the container, all the subsequently required paths need to start with the same prefix /home/shared_folder/ folowed by the internal paths within your working directory. For instance, if a fastq file is saved in D:/Data/Working_dir/Fastq/sample1.fastq.gz, and I decide to use Working_dir as my working directory, the path of this file will be /home/shared_folder/Fastq/sample1.fastq.gz.
 
 In your working directory you need to have:
 - your input files, either zipped fastq raw files or STAR aligned counts
@@ -33,6 +33,7 @@ In your working directory you need to have:
     - the first contains a unique identifier of the parameters which must never be changed
     - the second contains a brief explenation about how to compile this parameter
     - the other ones contain the information needed for this specific parameter and can be edited. All the information must be added in order without leaving intermediate empty columns: for example, if only one info is needed (ex: alignment = TRUE/FALSE) the first column must be used, if more you should start top compile from the first column, then the second, and so on. The parameters which could need more columns are heatmaps, boxplots and added_genes, which require to insert a list of gene (one for each column), or GSEA and pathways which similarly require a list of GO terms or KEGG pathways of interest. In this file it is also required to add the paths of the genome information files. All the possible parameters are provided, but once you have chosen with the TRUE/FALSE parameters to selectively run only some specific steps of your analysis, all the parameters related to deselected steps can be left empty (they will just be ignored by the pipeline). For example if you do not need to run the trimming step and you set it to FALSE, all the parameters related to this step, like fastqc, adapter, adapter2, clip_5_1, clip_5_2, clip_3_1 and clip_3_2 can be left empty.
+- Rscript.R, the R script that you need to run the analysis. You can directly download tha latest version from the GitHub and save it in your shared folder
 
 # Running the pipeline
 Once all the files have been put in the working directory and all the paths have been indicated in the settings and table files, open your terminal to run the analysis.
@@ -41,9 +42,9 @@ First you have to create the connection between your folder and the container, a
 docker run -d -v [Path/To/Your/Folder]:/home/shared_folder --name [container_name] hedgelab/bulk_image:image3
 
 what you need to edit is everything between squared brackets [], adding the path of your folder and assigning a unique name to your container. If you have not downloaded the image yet on your local Docker repository it will be directly downloaded from the Docker Hub. Once this download has been done the creation of futher containers for other analyses will be faster.
-The next step consists in launching an Rscript which is found direclty in the downloaded image, and it is also provided in the GitHub in case you want to edit and replace it. This script can performe all the steps of the analysis indicated in the settings file using the files provided in the table. It can then save all the outputs within a folder named Output_yymmdd in your working directory. To run this script you just have to run the following command:
+The next step consists in launching an Rscript you have saved in the shared folder, and it is also provided in the GitHub in case you want to edit and replace it. This script can performe all the steps of the analysis indicated in the settings file using the files provided in the table. It can then save all the outputs within a folder named Output_yymmdd in your working directory. To run this script you just have to run the following command:
 
-docker exec -it [container_name] Rscript /home/Rscript.R
+docker exec -it [container_name] Rscript /home/shared_folder/Rscript.R
 
 The only part that you need to edit is the container_name which should match the one assigned in the previous step.
 
