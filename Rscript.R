@@ -826,29 +826,37 @@ if(analysis == TRUE){
     for(j in 1:length(rownames(diff))){
       if(diff$logFC[j] > logFC & diff$adj.P.Val[j] < pvalue){col_to_plot = append(col_to_plot, paste0("up_", elements[1])); genes_to_plot = append(genes_to_plot, diff$gene_name[j])}
       else if(diff$logFC[j] < - logFC & diff$adj.P.Val[j] < pvalue){col_to_plot = append(col_to_plot, paste0("down_", elements[2])); genes_to_plot = append(genes_to_plot, diff$gene_name[j])}
-      else{col_to_plot = append(col_to_plot, "other"); genes_to_plot = append(genes_to_plot, "")}
+      else{col_to_plot = append(col_to_plot, "NS"); genes_to_plot = append(genes_to_plot, "")}
     };
     diff$col_to_plot = col_to_plot;
     diff$genes_to_plot = genes_to_plot;
     if(length(unique(diff$col_to_plot)) == 3){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("#3283FE", "grey", "#FA0087")) +
-        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name) +
+            geom_vline(aes(xintercept = logFC), linetype = "dashed") + geom_vline(aes(xintercept = -logFC), linetype = "dashed") +
+                geom_hline(aes(yintercept = -log10(pvalue)), linetype = "dashed");
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}
     if(length(unique(diff$col_to_plot)) == 1){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("grey")) +
-        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 30,	size = 2, hjust = 1.2) + ggtitle(cfr_name) +
+            geom_vline(aes(xintercept = logFC), linetype = "dashed") + geom_vline(aes(xintercept = -logFC), linetype = "dashed") +
+                geom_hline(aes(yintercept = -log10(pvalue)), linetype = "dashed");
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}
     if(length(unique(diff$col_to_plot)) == 2){if(sort(unique(diff$col_to_plot))[2] == "other"){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("#3283FE", "grey")) +
-        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 30,	size = 2, hjust = 1.2) + ggtitle(cfr_name) +
+            geom_vline(aes(xintercept = logFC), linetype = "dashed") + geom_vline(aes(xintercept = -logFC), linetype = "dashed") +
+                geom_hline(aes(yintercept = -log10(pvalue)), linetype = "dashed");
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}}
     if(length(unique(diff$col_to_plot)) == 2){if(sort(unique(diff$col_to_plot))[1] == "other"){
       ggplot(diff, aes(x = logFC, y = -log10(adj.P.Val))) + geom_point(aes(color = col_to_plot, size = 0.5, alpha = 0.5)) +
         scale_colour_manual(values = c("grey", "#FA0087")) +
-        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 50,	size = 2, hjust = 1.2) + ggtitle(cfr_name);
+        ggrepel::geom_text_repel(aes(label = genes_to_plot), max.overlaps = 30,	size = 2, hjust = 1.2) + ggtitle(cfr_name) +
+            geom_vline(aes(xintercept = logFC), linetype = "dashed") + geom_vline(aes(xintercept = -logFC), linetype = "dashed") +
+                geom_hline(aes(yintercept = -log10(pvalue)), linetype = "dashed");
       ggsave(filename = paste0("/home/shared_folder/Output_", current_time, "/Plots/Analysis/Volcano_plots/", cfr_name, ".pdf"), width = 14, height = 8)}}
     write.csv(diff, file = paste0("/home/shared_folder/Output_", current_time, "/Tables/DGEs/", cfr_name, ".csv"));
     diff_sign = diff %>% dplyr::filter(col_to_plot != "_other");
