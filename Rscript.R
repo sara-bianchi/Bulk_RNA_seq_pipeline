@@ -135,7 +135,7 @@ if(indexing == TRUE){
 if(alignment == TRUE | indexing == TRUE){
   if(length(unique(na.omit(settings$CPU))) != 1 | as.integer(settings$CPU[1]) == "NA"){
     print("invalid argument for CPU"); stop()
-  } else{CPU = as.logical(settings$CPU[1])}
+  } else{CPU = as.integer(settings$CPU[1])}
 }
 
 if(length(unique(na.omit(settings$analysis))) != 1 | as.logical(settings$analysis[1]) == "NA"){
