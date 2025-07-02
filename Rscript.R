@@ -113,6 +113,10 @@ if(length(unique(na.omit(settings$alignment))) != 1 | as.logical(settings$alignm
   print("invalid argument for alignment"); stop()
 } else{alignment = as.logical(settings$alignment[1])}
 
+if(length(unique(na.omit(settings$analysis))) != 1 | as.logical(settings$analysis[1]) == "NA"){
+  print("invalid argument for analysis"); stop()
+} else{analysis = as.logical(settings$analysis[1])}
+
 if(indexing == TRUE){
   if(length(unique(na.omit(settings$gtf))) != 1 | file.exists(settings$gtf[1]) == FALSE){
     print("invalid argument for gtf"); stop()
@@ -120,27 +124,30 @@ if(indexing == TRUE){
   if(length(unique(na.omit(settings$fasta))) != 1 | file.exists(settings$fasta[1]) == FALSE){
     print("invalid argument for fasta"); stop()
   } else{fasta = as.character(settings$fasta[1])};
-} else{if(alignment == TRUE){
+} else if(alignment == TRUE){
   if(length(unique(na.omit(settings$genome_dir))) != 1 | dir.exists(settings$genome_dir[1]) == FALSE){
     print("invalid argument for genom_dir"); stop()
-  } else{genome_dir = as.character(settings$genome_dir[1])}};
-  if(length(unique(na.omit(settings$gene_length))) != 1 | file.exists(settings$gene_length[1]) == FALSE){
-    print("invalid argument for gene_length"); stop()
-  } else{gene_length = as.character(settings$gene_length[1])};
-  if(length(unique(na.omit(settings$gene_info))) != 1 | file.exists(settings$gene_info[1]) == FALSE){
-    print("invalid argument for gene_info"); stop()
-  } else{geneInfo = as.character(settings$gene_info[1]); geneInfo = read.table(geneInfo, quote = "\"", comment.char = "", skip = 1)}
+  } else{genome_dir = as.character(settings$genome_dir[1])}
 }
+  
+if(indexing == FALSE){
+  if(analysis == TRUE){
+    if(length(unique(na.omit(settings$gene_length))) != 1 | file.exists(settings$gene_length[1]) == FALSE){
+      print("invalid argument for gene_length"); stop()
+    } else{gene_length = as.character(settings$gene_length[1])};
+    if(length(unique(na.omit(settings$gene_info))) != 1 | file.exists(settings$gene_info[1]) == FALSE){
+      print("invalid argument for gene_info"); stop()
+    } else{geneInfo = as.character(settings$gene_info[1]); geneInfo = read.table(geneInfo, quote = "\"", comment.char = "", skip = 1)}
+  }
+}
+
+
 
 if(alignment == TRUE | indexing == TRUE){
   if(length(unique(na.omit(settings$CPU))) != 1 | as.integer(settings$CPU[1]) == "NA"){
     print("invalid argument for CPU"); stop()
   } else{CPU = as.integer(settings$CPU[1])}
 }
-
-if(length(unique(na.omit(settings$analysis))) != 1 | as.logical(settings$analysis[1]) == "NA"){
-  print("invalid argument for analysis"); stop()
-} else{analysis = as.logical(settings$analysis[1])}
 
 if(alignment == TRUE){if(length(unique(na.omit(settings$mode))) != 1 | !as.character(settings$mode[1]) %in% c("single", "paired")){
   print("invalid argument for mode"); stop()
@@ -246,10 +253,12 @@ if(alignment == TRUE){
     }
   }
 }
-
-if(length(rownames(table)) < 3){
-  batch_correction == FALSE
+if(analysis == TRUE){
+  if(length(rownames(table)) < 3){
+    batch_correction == FALSE
+  }
 }
+
 
 #trimming
 if(trimming == TRUE){
@@ -317,9 +326,9 @@ if(indexing == TRUE){
   print("finishing indexing")
 }
 
-colnames(geneInfo) = c("gene_ID", "gene_name", "gene_type")
-
 if(analysis == TRUE){
+  
+  colnames(geneInfo) = c("gene_ID", "gene_name", "gene_type")
   if(length(unique(na.omit(settings$modified_genome))) != 1 | as.logical(settings$modified_genome[1]) == "NA"){
     print("invalid argument for modified_genome"); stop()
   } else{modified_genome = as.logical(settings$modified_genome[1])}
@@ -374,8 +383,8 @@ if(alignment == TRUE){
       system2("/STAR", paste0("--runThreadN ", CPU, " --genomeDir ", genome_dir, " --readFilesIn ", fastq, " --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts", zipped, " --outFileNamePrefix ", counts_dir, "/", sample_ID))}
   } else if(mode == "paired"){
     for(i in 1:length(rownames(table))){sample_ID = table$sample_ID[i];
-    zipped1 = ifelse(rev(strsplit(table$fastq1[i], ".")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
-    zipped2 = ifelse(rev(strsplit(table$fastq2[i], ".")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
+    zipped1 = ifelse(rev(strsplit(table$fastq1[i], "\\.")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
+    zipped2 = ifelse(rev(strsplit(table$fastq2[i], "\\.")[[1]])[1] == "gz", " --readFilesCommand zcat", "")
     if(zipped1 == zipped2){zipped = zipped1} else{
       stop("fastq files must be provided in the same zip format for R1 and R2")
     }
